@@ -34,35 +34,20 @@
     overflow: hidden;
   }
 
-  body::before, body::after {
-    content: '';
+  #synthwave-bg {
     position: fixed;
-    border-radius: 50%;
-    filter: blur(120px);
-    pointer-events: none;
+    inset: 0;
     z-index: 0;
+    width: 100%;
+    height: 100%;
   }
-  body::before {
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%);
-    top: -200px; left: -100px;
-    animation: drift1 12s ease-in-out infinite alternate;
-  }
-  body::after {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%);
-    bottom: -150px; right: -100px;
-    animation: drift2 15s ease-in-out infinite alternate;
-  }
-
-  @keyframes drift1 { to { transform: translate(80px, 60px); } }
-  @keyframes drift2 { to { transform: translate(-60px, -80px); } }
 
   .wrap {
     position: relative;
     z-index: 1;
-    width: 100%;
-    max-width: 680px;
+    width: fit-content;
+    max-width: 90vw;
+    min-width: 340px;
     padding: 24px;
     animation: fadeUp 0.6s ease both;
   }
@@ -77,7 +62,6 @@
   }
   .logo span { color: var(--accent); }
 
-  /* Card */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -87,6 +71,8 @@
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 32px 80px rgba(0,0,0,0.5);
     transition: border-color 0.3s;
+    width: fit-content;
+    min-width: 100%;
   }
   .card:hover { border-color: var(--border-lit); }
 
@@ -157,9 +143,11 @@
     font-size: 13.5px;
     line-height: 1.8;
     color: rgba(255,255,255,0.78);
-    overflow-x: auto;
-    white-space: pre;
-    background: rgba(0,0,0,0.25);
+    overflow-x: visible;
+    white-space: nowrap;
+    background: transparent;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
     user-select: none;
     pointer-events: none;
   }
@@ -168,7 +156,6 @@
   pre::-webkit-scrollbar-track { background: transparent; }
   pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 
-  /* subtle line numbers vibe */
   .card-footer {
     padding: 10px 18px;
     border-top: 1px solid var(--border);
@@ -188,20 +175,18 @@
     color: rgba(255,255,255,0.15);
   }
 
-  /* Toast */
   .toast {
     position: fixed;
     bottom: 28px;
     left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: rgba(30,30,40,0.95);
+    background: none;
     border: 1px solid var(--border-lit);
     border-radius: 10px;
     padding: 12px 22px;
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
-    backdrop-filter: blur(20px);
     transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
     z-index: 999;
     opacity: 0;
@@ -224,16 +209,18 @@
 </head>
 <body>
 
+<canvas id="synthwave-bg"></canvas>
+
 <div class="wrap">
-  <div class="logo">Rapture Assist Loader<span></div>
+  <div class="logo">Untitled Rapture Assist<span></div>
 
   <div class="card">
     <div class="card-header">
       <div class="dot dot-red"></div>
       <div class="dot dot-yellow"></div>
       <div class="dot dot-green"></div>
-      <div class="card-title">Script Loader</div>
-      <span class="lang-tag">Lua</span>
+      <div class="card-title">‎</div>
+
       <button class="btn-copy" id="copyBtn" onclick="copySnippet()">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <rect x="4" y="1" width="7" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
@@ -243,10 +230,10 @@
       </button>
     </div>
 
-    <pre id="codeBlock">loadstring(game:HttpGet("https://githubusercontent.raw/vulkan/main/script"))()</pre>
+    <pre id="codeBlock">loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()</pre>
 
     <div class="card-footer">
-      <span class="footer-hint">   </span>
+
       <span class="footer-chars" id="charCount"></span>
     </div>
   </div>
@@ -258,10 +245,95 @@
 </div>
 
 <script>
-  const code = `loadstring(game:HttpGet("https://githubusercontent.raw/vulkan/main/script"))()`;
-
+  const code = `loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()`;
   document.getElementById('charCount').textContent = code.length + ' chars';
 
+  const canvas = document.getElementById('synthwave-bg');
+  const ctx = canvas.getContext('2d');
+  let W, H, t = 0;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Each waves yBase, amp, freq, speed, phase, color, alpha, blur
+  const waves = [
+    { yFrac:0.82, amp:0.13, freq:1.1,  speed:0.28, phase:0.0,  color:'rgba(255,255,255,',  alpha:0.18 },
+    { yFrac:0.74, amp:0.10, freq:0.85, speed:0.20, phase:1.4,  color:'rgba(200,200,200,',  alpha:0.14 },
+    { yFrac:0.66, amp:0.09, freq:1.35, speed:0.33, phase:2.8,  color:'rgba(255,255,255,',  alpha:0.11 },
+    { yFrac:0.60, amp:0.07, freq:0.95, speed:0.18, phase:4.2,  color:'rgba(180,180,180,',  alpha:0.09 },
+    { yFrac:0.55, amp:0.06, freq:1.6,  speed:0.40, phase:0.9,  color:'rgba(255,255,255,',  alpha:0.07 },
+    { yFrac:0.50, amp:0.05, freq:1.2,  speed:0.25, phase:3.5,  color:'rgba(220,220,220,',  alpha:0.05 },
+    { yFrac:0.45, amp:0.04, freq:0.75, speed:0.14, phase:1.8,  color:'rgba(255,255,255,',  alpha:0.04 },
+    { yFrac:0.40, amp:0.03, freq:1.9,  speed:0.50, phase:5.1,  color:'rgba(200,200,200,',  alpha:0.03 },
+  ];
+
+  function drawWave(wave) {
+    const yBase = H * wave.yFrac;
+    const amp   = H * wave.amp;
+    const steps = Math.ceil(W / 2);
+
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+
+    for (let x = 0; x <= W; x += 2) {
+      const nx = x / W;
+      const y = yBase
+        - amp * Math.sin(nx * Math.PI * 2 * wave.freq + t * wave.speed + wave.phase)
+        - amp * 0.35 * Math.sin(nx * Math.PI * 2 * wave.freq * 2.3 + t * wave.speed * 1.5 + wave.phase + 1.1);
+      ctx.lineTo(x, y);
+    }
+
+    ctx.lineTo(W, H);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(0, yBase - amp, 0, H);
+    grad.addColorStop(0,   wave.color + wave.alpha + ')');
+    grad.addColorStop(0.4, wave.color + (wave.alpha * 0.6) + ')');
+    grad.addColorStop(1,   wave.color + '0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function draw() {
+    t += 0.012;
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0,   '#000000');
+    bg.addColorStop(0.5, '#080808');
+    bg.addColorStop(1,   '#111111');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const ambientX = W * 0.5;
+    const ambientY = H * 0.3;
+    const ambient = ctx.createRadialGradient(ambientX, ambientY, 0, ambientX, ambientY, W * 0.65);
+    ambient.addColorStop(0,   'rgba(255,255,255,0.05)');
+    ambient.addColorStop(0.5, 'rgba(255,255,255,0.02)');
+    ambient.addColorStop(1,   'transparent');
+    ctx.fillStyle = ambient;
+    ctx.fillRect(0, 0, W, H);
+
+    for (let i = waves.length - 1; i >= 0; i--) {
+      drawWave(waves[i]);
+    }
+
+    const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H*0.6, H*0.9);
+    vig.addColorStop(0,   'transparent');
+    vig.addColorStop(1,   'rgba(0,0,0,0.75)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Copy buttn
+  window.copySnippet = copySnippet;
   async function copySnippet() {
     const btn = document.getElementById('copyBtn');
     try {
