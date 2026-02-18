@@ -1,2 +1,2 @@
 # Welcome To Rapture Assist!
-![My Image](StarterPage.png)
+![My Image](Icons/StarterPage.png)
