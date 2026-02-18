@@ -19,7 +19,6 @@
     --muted: rgba(255,255,255,0.35);
     --accent: #a78bfa;
     --accent2: #38bdf8;
-    --glow: rgba(167,139,250,0.15);
   }
 
   html, body { height: 100%; }
@@ -43,6 +42,56 @@
     height: 100%;
   }
 
+  #loader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(5, 5, 7, 0.52);
+    backdrop-filter: blur(32px) saturate(1.5);
+    -webkit-backdrop-filter: blur(32px) saturate(1.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.9s ease;
+  }
+  #loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .loader-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.28);
+    animation: loaderFadeIn 0.7s ease both;
+  }
+
+  .loader-bar-wrap {
+    width: 160px;
+    height: 1.5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+    animation: loaderFadeIn 0.7s 0.12s ease both;
+  }
+  .loader-bar {
+    height: 100%;
+    width: 0%;
+    background: rgba(255,255,255,0.8);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.35), 0 0 3px rgba(255,255,255,0.7);
+  }
+
+  @keyframes loaderFadeIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   .wrap {
     position: relative;
     z-index: 1;
@@ -50,7 +99,13 @@
     max-width: 90vw;
     min-width: 340px;
     padding: 24px;
-    animation: fadeUp 0.6s ease both;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .wrap.ready {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .logo {
@@ -97,18 +152,6 @@
     letter-spacing: 0.2px;
   }
 
-  .lang-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: var(--accent2);
-    background: rgba(56,189,248,0.1);
-    border: 1px solid rgba(56,189,248,0.2);
-    border-radius: 5px;
-    padding: 2px 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
   .btn-copy {
     font-family: 'Syne', sans-serif;
     font-size: 12px;
@@ -126,11 +169,11 @@
     gap: 6px;
     white-space: nowrap;
   }
- .btn-copy:hover {
-   background: rgba(230, 230, 230,0.08);
-   color: #e0e0e0;
-   border-color: rgba(230, 230, 230,0.35);
-   box-shadow: 0 0 16px rgba(230, 230, 230,0.08);
+  .btn-copy:hover {
+    background: rgba(230,230,230,0.08);
+    color: #e0e0e0;
+    border-color: rgba(230,230,230,0.35);
+    box-shadow: 0 0 16px rgba(230,230,230,0.08);
   }
   .btn-copy.copied {
     color: #4ade80;
@@ -154,10 +197,6 @@
     pointer-events: none;
   }
 
-  pre::-webkit-scrollbar { height: 4px; }
-  pre::-webkit-scrollbar-track { background: transparent; }
-  pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
-
   .card-footer {
     padding: 10px 18px;
     border-top: 1px solid var(--border);
@@ -165,21 +204,10 @@
     align-items: center;
     justify-content: space-between;
   }
-  .footer-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.3px;
-  }
   .footer-chars {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: rgba(255,255,255,0.15);
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
@@ -187,15 +215,22 @@
 
 <canvas id="synthwave-bg"></canvas>
 
-<div class="wrap">
-  <div class="logo">Untitled Rapture Assist<span></div>
+<div id="loader">
+  <div class="loader-logo">Untitled Rapture Assist</div>
+  <div class="loader-bar-wrap">
+    <div class="loader-bar" id="loaderBar"></div>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap">
+  <div class="logo">Untitled Rapture Assist<span></span></div>
 
   <div class="card">
     <div class="card-header">
       <div class="dot dot-red"></div>
       <div class="dot dot-yellow"></div>
       <div class="dot dot-green"></div>
-      <div class="card-title">‎&#8203;</div>
+      <div class="card-title">&#8203;</div>
 
       <button class="btn-copy" id="copyBtn" onclick="copySnippet()">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -209,19 +244,18 @@
     <pre id="codeBlock">loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()</pre>
 
     <div class="card-footer">
-
       <span class="footer-chars" id="charCount"></span>
     </div>
   </div>
 </div>
 
 <script>
-  const code = `loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()`;
+  const code = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()';
   document.getElementById('charCount').textContent = code.length + ' chars';
 
   const canvas = document.getElementById('synthwave-bg');
   const ctx = canvas.getContext('2d');
-  let W, H, t = 0;
+  let W, H, waveT = 0;
 
   function resize() {
     W = canvas.width  = window.innerWidth;
@@ -231,34 +265,30 @@
   window.addEventListener('resize', resize);
 
   const waves = [
-    { yFrac:0.82, amp:0.13, freq:1.1,  speed:0.28, phase:0.0,  color:'rgba(255,255,255,',  alpha:0.18 },
-    { yFrac:0.74, amp:0.10, freq:0.85, speed:0.20, phase:1.4,  color:'rgba(200,200,200,',  alpha:0.14 },
-    { yFrac:0.66, amp:0.09, freq:1.35, speed:0.33, phase:2.8,  color:'rgba(255,255,255,',  alpha:0.11 },
-    { yFrac:0.60, amp:0.07, freq:0.95, speed:0.18, phase:4.2,  color:'rgba(180,180,180,',  alpha:0.09 },
-    { yFrac:0.55, amp:0.06, freq:1.6,  speed:0.40, phase:0.9,  color:'rgba(255,255,255,',  alpha:0.07 },
-    { yFrac:0.50, amp:0.05, freq:1.2,  speed:0.25, phase:3.5,  color:'rgba(220,220,220,',  alpha:0.05 },
-    { yFrac:0.45, amp:0.04, freq:0.75, speed:0.14, phase:1.8,  color:'rgba(255,255,255,',  alpha:0.04 },
-    { yFrac:0.40, amp:0.03, freq:1.9,  speed:0.50, phase:5.1,  color:'rgba(200,200,200,',  alpha:0.03 },
+    { yFrac:0.82, amp:0.13, freq:1.1,  speed:0.28, phase:0.0,  color:'rgba(255,255,255,', alpha:0.18 },
+    { yFrac:0.74, amp:0.10, freq:0.85, speed:0.20, phase:1.4,  color:'rgba(200,200,200,', alpha:0.14 },
+    { yFrac:0.66, amp:0.09, freq:1.35, speed:0.33, phase:2.8,  color:'rgba(255,255,255,', alpha:0.11 },
+    { yFrac:0.60, amp:0.07, freq:0.95, speed:0.18, phase:4.2,  color:'rgba(180,180,180,', alpha:0.09 },
+    { yFrac:0.55, amp:0.06, freq:1.6,  speed:0.40, phase:0.9,  color:'rgba(255,255,255,', alpha:0.07 },
+    { yFrac:0.50, amp:0.05, freq:1.2,  speed:0.25, phase:3.5,  color:'rgba(220,220,220,', alpha:0.05 },
+    { yFrac:0.45, amp:0.04, freq:0.75, speed:0.14, phase:1.8,  color:'rgba(255,255,255,', alpha:0.04 },
+    { yFrac:0.40, amp:0.03, freq:1.9,  speed:0.50, phase:5.1,  color:'rgba(200,200,200,', alpha:0.03 },
   ];
 
   function drawWave(wave) {
     const yBase = H * wave.yFrac;
     const amp   = H * wave.amp;
-
     ctx.beginPath();
     ctx.moveTo(0, H);
-
     for (let x = 0; x <= W; x += 2) {
       const nx = x / W;
       const y = yBase
-        - amp * Math.sin(nx * Math.PI * 2 * wave.freq + t * wave.speed + wave.phase)
-        - amp * 0.35 * Math.sin(nx * Math.PI * 2 * wave.freq * 2.3 + t * wave.speed * 1.5 + wave.phase + 1.1);
+        - amp * Math.sin(nx * Math.PI * 2 * wave.freq + waveT * wave.speed + wave.phase)
+        - amp * 0.35 * Math.sin(nx * Math.PI * 2 * wave.freq * 2.3 + waveT * wave.speed * 1.5 + wave.phase + 1.1);
       ctx.lineTo(x, y);
     }
-
     ctx.lineTo(W, H);
     ctx.closePath();
-
     const grad = ctx.createLinearGradient(0, yBase - amp, 0, H);
     grad.addColorStop(0,   wave.color + wave.alpha + ')');
     grad.addColorStop(0.4, wave.color + (wave.alpha * 0.6) + ')');
@@ -267,9 +297,8 @@
     ctx.fill();
   }
 
-  function draw() {
-    t += 0.012;
-
+  function drawCanvas() {
+    waveT += 0.012;
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0,   '#000000');
     bg.addColorStop(0.5, '#080808');
@@ -277,35 +306,64 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const ambientX = W * 0.5;
-    const ambientY = H * 0.3;
-    const ambient = ctx.createRadialGradient(ambientX, ambientY, 0, ambientX, ambientY, W * 0.65);
+    const ambient = ctx.createRadialGradient(W*0.5, H*0.3, 0, W*0.5, H*0.3, W*0.65);
     ambient.addColorStop(0,   'rgba(255,255,255,0.05)');
     ambient.addColorStop(0.5, 'rgba(255,255,255,0.02)');
     ambient.addColorStop(1,   'transparent');
     ctx.fillStyle = ambient;
     ctx.fillRect(0, 0, W, H);
 
-    for (let i = waves.length - 1; i >= 0; i--) {
-      drawWave(waves[i]);
-    }
+    for (let i = waves.length - 1; i >= 0; i--) drawWave(waves[i]);
 
     const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H*0.6, H*0.9);
-    vig.addColorStop(0,   'transparent');
-    vig.addColorStop(1,   'rgba(0,0,0,0.75)');
+    vig.addColorStop(0, 'transparent');
+    vig.addColorStop(1, 'rgba(0,0,0,0.75)');
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, W, H);
 
-    requestAnimationFrame(draw);
+    requestAnimationFrame(drawCanvas);
   }
-  draw();
+  drawCanvas();
+
+  // loader
+  const bar    = document.getElementById('loaderBar');
+  const loader = document.getElementById('loader');
+  const wrap   = document.getElementById('mainWrap');
+
+  const totalDuration = 1500 + Math.random() * 2000;
+
+  function easeProgress(p) {
+    return p < 0.5
+      ? 4 * p * p * p
+      : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  }
+
+  const loaderStart = performance.now();
+
+  function tickLoader(now) {
+    const elapsed = Math.max(0, now - loaderStart);
+    const p = Math.min(elapsed / totalDuration, 1);
+    bar.style.width = (easeProgress(p) * 100) + '%';
+
+    if (p < 1) {
+      requestAnimationFrame(tickLoader);
+    } else {
+      bar.style.width = '100%';
+      setTimeout(function() {
+        loader.classList.add('hidden');
+        wrap.classList.add('ready');
+      }, 600);
+    }
+  }
+
+  requestAnimationFrame(tickLoader);
 
   window.copySnippet = copySnippet;
   async function copySnippet() {
     const btn = document.getElementById('copyBtn');
     try {
       await navigator.clipboard.writeText(code);
-    } catch {
+    } catch(e) {
       const ta = document.createElement('textarea');
       ta.value = code;
       document.body.appendChild(ta);
@@ -313,22 +371,11 @@
       document.execCommand('copy');
       ta.remove();
     }
-
     btn.classList.add('copied');
-    btn.innerHTML = `
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M2 6l3 3 5-5" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Copied!`;
-
-    setTimeout(() => {
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!';
+    setTimeout(function() {
       btn.classList.remove('copied');
-      btn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="4" y="1" width="7" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-          <rect x="1" y="3" width="7" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
-        Copy`;
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="1" width="7" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="3" width="7" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg> Copy';
     }, 2200);
   }
 </script>
