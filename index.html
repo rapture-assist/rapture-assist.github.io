@@ -176,32 +176,6 @@
     color: rgba(255,255,255,0.15);
   }
 
-  .toast {
-    position: fixed;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: none;
-    border: 1px solid var(--border-lit);
-    border-radius: 10px;
-    padding: 12px 22px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
-    z-index: 999;
-    opacity: 0;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-  .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
-
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -240,11 +214,6 @@
   </div>
 </div>
 
-<div class="toast" id="toast">
-  <div class="toast-dot"></div>
-  Copied to clipboard
-</div>
-
 <script>
   const code = `loadstring(game:HttpGet("https://raw.githubusercontent.com/rapture-assist/Home/refs/heads/main/script"))()`;
   document.getElementById('charCount').textContent = code.length + ' chars';
@@ -260,7 +229,6 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Each waves yBase, amp, freq, speed, phase, color, alpha, blur
   const waves = [
     { yFrac:0.82, amp:0.13, freq:1.1,  speed:0.28, phase:0.0,  color:'rgba(255,255,255,',  alpha:0.18 },
     { yFrac:0.74, amp:0.10, freq:0.85, speed:0.20, phase:1.4,  color:'rgba(200,200,200,',  alpha:0.14 },
@@ -275,7 +243,6 @@
   function drawWave(wave) {
     const yBase = H * wave.yFrac;
     const amp   = H * wave.amp;
-    const steps = Math.ceil(W / 2);
 
     ctx.beginPath();
     ctx.moveTo(0, H);
@@ -302,7 +269,6 @@
   function draw() {
     t += 0.012;
 
-    // Background
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0,   '#000000');
     bg.addColorStop(0.5, '#080808');
@@ -333,7 +299,6 @@
   }
   draw();
 
-  // Copy buttn
   window.copySnippet = copySnippet;
   async function copySnippet() {
     const btn = document.getElementById('copyBtn');
@@ -355,8 +320,6 @@
       </svg>
       Copied!`;
 
-    showToast();
-
     setTimeout(() => {
       btn.classList.remove('copied');
       btn.innerHTML = `
@@ -366,14 +329,6 @@
         </svg>
         Copy`;
     }, 2200);
-  }
-
-  let toastTimer;
-  function showToast() {
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
   }
 </script>
 </body>
